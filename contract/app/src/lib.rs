@@ -74,7 +74,16 @@ impl PropertySystem {
     }
 
 
-    pub fn add_user(&mut self, first_name: String, last_name: String, about_yourself: String, phone_number: String, address: String, email: String, password: String) {
+    pub fn add_user(
+        &mut self,
+        first_name: String, 
+        last_name: String, 
+        about_yourself: String, 
+        phone_number: String, 
+        address: String, 
+        email: String, 
+        password: String
+    ) {
         let user = User {
             id: (self.users.len() + 1) as i32,
             account: env::signer_account_id(),
@@ -92,7 +101,12 @@ impl PropertySystem {
         self.users.push(user);
     }
 
-    pub fn transfer_property_using_account(&mut self, property_id :i32, from_account_str : String, to_account_str: String) ->  String {
+    pub fn transfer_property_using_account(
+        &mut self, 
+        property_id :i32, 
+        from_account_str : String, 
+        to_account_str: String
+    ) ->  String {
 
         let from_account = AccountId::new_unchecked(from_account_str);
         let to_account = AccountId::new_unchecked(to_account_str);
