@@ -69,17 +69,13 @@ export default function ProfileTabs({ isSignedIn, wallet ,contractId}) {
     setCurrentModal(modal);
     if (modal === 'signup') {
       openListingModal();
-    } else if (modal === 'signin') {
-      openTransferModal();
-    }
+    } 
   };
 
   const closeModal = () => {
     if (currentModal === 'signup') {
       closeListingModal();
-    } else if (currentModal === 'signin') {
-      closeTransferModal();
-    }
+    } 
     setCurrentModal(null);
   };
 
@@ -163,6 +159,7 @@ export default function ProfileTabs({ isSignedIn, wallet ,contractId}) {
           const account = await nearConnection.account(wallet.accountId);
           const balance = await account.getAccountBalance();
           setBalance(balance);
+          getUser().then(setUser);
 
         } else {
           console.log('User is not signed in.');
@@ -206,7 +203,7 @@ export default function ProfileTabs({ isSignedIn, wallet ,contractId}) {
         contractId:contractId
         })
         .then(async () => {
-        return wallet.viewMethod({ method: "login_password", args: {email: email,password:password}, contractId });
+           
         })
         .then(setUser)
         .finally(() => {
@@ -217,34 +214,21 @@ export default function ProfileTabs({ isSignedIn, wallet ,contractId}) {
         closeModal() // Close the modal after posting the job
   };
 
-  const handleLogin = async () => {
-    // Call the NEAR Protocol function to post the job
-    // await postJobToSmartContract(formData);
- 
-	
-    
-
-    const email = formData1.email;
-    const password = formData1.password;
-
-
-
-      response = await wallet.viewMethod({ method: "login_password", args: {email: email,password:password}, contractId });
-
-        console.log(response);
-
-        const [user, message] = response; // Destructure the response tuple
-          
-          if (user) {
-              setUser(user); // Set the user if it's available
-          }
-
-          if (user === null && message) {
-            openAlert(); // Open the Chakra UI alert dialog
-          } 
-      
-        closeModal(); // Close the modal after posting the job
-  };
+  async function getUser() {
+    try {
+      if (isSignedIn) {
+        const account_id = wallet.accountId;
+        const result = await wallet.viewMethod({ method: "get_user", args: { account_id: account_id }, contractId });
+        return result;
+      } else {
+        return "";
+      }
+    } catch (error) {
+      console.error("Error fetching saver:", error);
+      return ""; // Return an empty string or handle the error accordingly
+    }
+  }
+  
 
 
   console.log("user is",user);
@@ -255,9 +239,8 @@ export default function ProfileTabs({ isSignedIn, wallet ,contractId}) {
     <>
       {user === null || !user ? (
         <HStack alignSelf={'end'} marginBottom={2}>
-          <Button onClick={() => openModal('signin')}>Sign In</Button>
           <Button onClick={() => openModal('signup')} background={'green'} color={'white'}>
-            Sign Up
+            Update Details
           </Button>
         </HStack>
       ) : (
@@ -455,48 +438,7 @@ export default function ProfileTabs({ isSignedIn, wallet ,contractId}) {
       </>
       <>
 
-        <Modal
-          isOpen={transferModalOpen && currentModal === 'signin'}
-          onClose={closeModal}
-          initialFocusRef={initialRef}
-          finalFocusRef={finalRef}
-        >
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>Sign In</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody pb={6}>
 
-              <FormControl mt={4}>
-                <FormLabel>Email</FormLabel>
-                <Input
-                  type='email'
-                  name="email"
-                  placeholder="enter your email"
-                  value={formData1.email}
-                  onChange={handleInputChange1}
-                  size="sm"
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel>Password</FormLabel>
-                <Input
-                  type="password"
-                  name="password"
-                  placeholder="enter password"
-                  value={formData1.password}
-                  onChange={handleInputChange1}
-                />
-              </FormControl>
-            </ModalBody>
-            <ModalFooter>
-              <Button colorScheme="blue" mr={3} onClick={handleLogin}>
-                Submit
-              </Button>
-              <Button onClick={closeModal}>Cancel</Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
                   </>
     </Container>
   );

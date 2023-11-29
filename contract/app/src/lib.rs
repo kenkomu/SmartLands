@@ -9,6 +9,8 @@ use std::string::String;
 use models::rating::PropertyRating;
 use models::property::{Property, PropertyLocation};
 use crate::models::property::{PropertyContactInformation, PropertyStatus};
+use std::collections::HashMap; 
+
 
 const DEFAULT_GREETING: &str = "Hello";
 const OKAY: &str = "okay";
@@ -26,9 +28,12 @@ const PROPERTY_DOES_NOT_EXIST: &str = "from account does not exist";
 #[derive(BorshDeserialize, BorshSerialize)]
 struct PropertySystem {
     greeting: String,
-    property: Vector<Property>,
-    users: Vector<User>,
-    ratings: Vector<PropertyRating>,
+    properties: HashMap<u128, Property>,
+    users: HashMap<AccountId, User>,
+    ratings: HashMap<u128, PropertyRating>,
+    user_id:u128,
+    rating_id:u128,
+    property_id:u128,
 }
 
 // Define the default, which automatically initializes the contract
@@ -36,9 +41,12 @@ impl Default for PropertySystem {
     fn default() -> Self {
         Self {
             greeting: DEFAULT_GREETING.to_string(),
-            property: Vector::new(b"r".to_vec()),
-            users: Vector::new(b"r".to_vec()),
-            ratings:Vector::new(b"r".to_vec()),
+            properties: HashMap::new(),
+            users: HashMap::new(),
+            ratings:HashMap::new(),
+            user_id:0,
+            rating_id:0,
+            property_id:0,
         }
     }
 }
@@ -59,19 +67,6 @@ impl PropertySystem {
         self.greeting = greeting;
     }
 
-    /// Init attribute used for instantiation.
-    #[init]
-    pub fn new() -> Self {
-        // Useful snippet to copy/paste, making sure state isn't already initialized
-        assert!(env::state_read::<Self>().is_none(), "Already initialized");
-        // Note this is an implicit "return" here
-        Self {
-            greeting: DEFAULT_GREETING.to_string(),
-            property: Vector::new(b"r".to_vec()),
-            users: Vector::new(b"r".to_vec()),
-            ratings: Vector::new(b"r".to_vec()),
-        }
-    }
 
 
     pub fn add_user(
@@ -84,8 +79,15 @@ impl PropertySystem {
         email: String, 
         password: String
     ) {
+
+        let new_user_id = self.user_id + 1;
+
+        let account_id = env::predecessor_account_id();
+
+        self.user_id += 1;
+
         let user = User {
-            id: (self.users.len() + 1) as i32,
+            id: new_user_id as i32,
             account: env::signer_account_id(),
             email,
             first_name,
@@ -98,120 +100,77 @@ impl PropertySystem {
             is_blocked: false,
 
         };
-        self.users.push(user);
+        self.users.insert(account_id,user);
     }
 
     pub fn transfer_property_using_account(
-        &mut self, 
-        property_id :i32, 
-        from_account_str : String, 
-        to_account_str: String
+        &mut self,
+        property_id :u128, 
+        to_account: AccountId
     ) ->  String {
 
-        let from_account = AccountId::new_unchecked(from_account_str);
-        let to_account = AccountId::new_unchecked(to_account_str);
 
-
-        let mut from_user :Option<&User> = Option::None;
-        let mut to_user :Option<&User> = Option::None;
-
-        for a_user in self.users.iter() {
-            if a_user.account ==from_account {
-                from_user=Some(a_user)
+        let from_account = env::signer_account_id();
+        // Check if account_id_to_check is in users HashMap
+        if let Some(property) = self.properties.get_mut(&property_id) {
+            if property.owner == from_account {
+                property.owner = to_account;
+                property.is_available = false;
+                "Property transferred successfully.".to_string()
+            } else {
+                "Only the owner can transfer ownership.".to_string()
             }
-            if a_user.account ==to_account{
-                to_user=Some(a_user)
-            }
+        } else {
+            "Property ID does not exist.".to_string()
         }
 
-
-        match from_user {
-            None => {
-                env::log_str("from user does not exist ");
-                return ACCOUNT_FROM_DOES_NOT_EXIST.to_string()
-            },
-            Some(_)=>{
-                env::log_str("from user valid")
-            }
-        }
-        match to_user {
-            None => {
-                env::log_str("to user does not exist ");
-                return ACCOUNT_TARGET_DOES_NOT_EXIST.to_string()
-            },
-            Some(_)=>{
-                env::log_str("to user valid")
-            }
-        }
-
-
-        // check property exists
-        let property_for_transfer =  self.property.iter_mut().find(|item| item.id ==property_id);
-
-
-        match property_for_transfer {
-            None => {
-                env::log_str("property does not exist ");
-                return PROPERTY_DOES_NOT_EXIST.to_string()
-            },
-            Some(_)=>{
-                env::log_str("property valid")
-            }
-        }
-
-        for property_item in self.property.iter_mut() {
-            if property_item.id == property_id {
-                property_item.owner = to_user.unwrap().account.clone();
-                property_item.is_available = false;
-            }
-        }
-
-        OKAY.to_string()
+     
     }
 
 
 
     // Public method - returns all the users
     pub fn get_users(self) -> Vec<User> {
-        let mut  users:Vec<User> = vec![];
-        for item in self.users.iter() {
-            users.push(item.clone());
-        }
-        return users;
+
+        let mut result = self.users.values().cloned().collect::<Vec<User>>();
+   
+        result
     }
 
     // Public method - returns all the property
     pub fn get_property_all(&self) -> Vec<Property> {
 
-        let mut  properties:Vec<Property> = vec![];
-        for item in self.property.iter() {
-            properties.push(item.clone());
-        }
-        return properties;
+        let mut result = self.properties.values().cloned().collect::<Vec<Property>>();
+            
+        // Sort the vector by job_id
+        result.sort_by(|a, b| a.id.cmp(&b.id));
+        
+        result
     }
 
-    pub fn login_password(&self, email: String, password: String) -> (Option<&User>, String) {
-        let user = self.users.iter().find(|item| item.email == email);
+    // pub fn login_password(&self, email: String, password: String) -> (Option<&User>, String) {
+    //     let user = self.users.iter().find(|item| item.email == email);
 
-        return match user {
-            Some(data) => {
-                if data.password == password {
-                    (Option::Some(data), OKAY.to_string())
-                } else {
-                    (Option::None, ACCOUNT_WRONG_PASSWORD.to_string())
-                }
-            }
-            None => (Option::None, "email not found in system".to_string())
-        };
-    }
+    //     return match user {
+    //         Some(data) => {
+    //             if data.password == password {
+    //                 (Option::Some(data), OKAY.to_string())
+    //             } else {
+    //                 (Option::None, ACCOUNT_WRONG_PASSWORD.to_string())
+    //             }
+    //         }
+    //         None => (Option::None, "email not found in system".to_string())
+    //     };
+    // }
 
+    
     pub fn get_property_available(&self) -> Vec<&Property> {
-        let mut data: Vec<&Property> = vec![];
-        for elem in &mut self.property.iter() {
-            data.push(elem);
-        }
-        data
+        self.properties
+            .values()
+            .filter(|property| property.is_available)
+            .collect()
     }
+
     pub fn add_property(&mut self,
                         is_available: bool,
                         title: String,
@@ -230,6 +189,8 @@ impl PropertySystem {
                         lat: f32,
                         long: f32,
     ) -> String {
+
+        let the_owner = env::signer_account_id();
         let sale = String::from("sale");
         let rent = String::from("rent");
         let not_available = String::from("not_available");
@@ -254,9 +215,14 @@ impl PropertySystem {
             lat,
             long,
         };
+
+        let new_property_id = self.property_id + 1;
+
+        self.property_id += 1;
+
         let property_item = Property {
-            owner: env::current_account_id(),
-            id: (self.property.len() + 1) as i32,
+            owner: the_owner,
+            id: new_property_id.clone() as i32,
             is_available,
             title,
             description,
@@ -267,8 +233,23 @@ impl PropertySystem {
             location,
 
         };
-        self.property.push(property_item);
+        self.properties.insert(new_property_id,property_item);
         return "okay".to_string();
+    }
+
+    pub fn get_properties_for_account(&self, account_id: AccountId) -> Vec<&Property> {
+        self.properties
+            .values()
+            .filter(|property| property.owner == account_id)
+            .collect()
+    }
+
+    pub fn get_property(&self, property_id: u128) -> Option<Property> {
+        self.properties.get(&property_id).cloned()
+    }
+
+    pub fn get_user(&self, account_id: AccountId) -> Option<User> {
+        self.users.get(&account_id).cloned()
     }
 }
 
@@ -279,10 +260,12 @@ impl PropertySystem {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use near_sdk::test_utils::{accounts};
 
 
     #[test]
     fn add_then_get_property() {
+
         let mut contract = PropertySystem::default();
         contract.add_property(
             true, // is_available: bool,
@@ -302,19 +285,32 @@ mod tests {
             0.02922,// lat: f32,
             0.1223, // long: f32,
         );
-        assert_eq!(
-            contract.get_property_all().len(),
-            1
-        );
-        assert_eq!(
-            contract.get_property_available().len(),
-            1
-        );
+
+        let property = contract.get_property(1);
+
+        let new_property = property.unwrap();
+
+        assert_eq!(new_property.title,"My jumbo system".to_string());
+        assert_eq!(new_property.price,1_000_000);
+
+        let the_owner = env::signer_account_id();
+
+        assert_eq!(new_property.owner, the_owner.clone());
+
+        let property_for_account = contract.get_properties_for_account(the_owner);
+
+        assert_eq!(property_for_account[0].area, 5000);
+        
+        
+
     }
 
     #[test]
-    fn add_then_get_users_login() {
+    fn add__user() {
         let mut contract = PropertySystem::default();
+
+        let the_user = env::signer_account_id();
+
         contract.add_user(
             "howdy".to_string(),
             "howdy".to_string(),
@@ -324,42 +320,65 @@ mod tests {
             "howdy@mail.com".to_string(),
             "howdy".to_string(),
         );
-        // assert_eq!(
-        //     contract.get_users(),
-        //     1
-        // );
-        //login
-        // valid password
-        // let (res, reason) = contract.login_password("howdy@mail.com".to_string(), "howdy".to_string());
-        // assert_eq!(
-        //     res,
-        //     Some
-        // );
-        // assert_eq!(
-        //     reason,
-        //     OKAY.to_string()
-        // );
 
-        // email not valid
-        let (res2, reason2) = contract.login_password("kkakkakka".to_string(), "".to_string());
-        assert_eq!(
-            res2,
-            None
-        );
-        assert_eq!(
-            reason2,
-            EMAIL_NOT_FOUND.to_string()
+        let user = contract.get_user(the_user).unwrap();
+
+        assert_eq!(user.first_name,"howdy".to_string());
+        assert_eq!(user.email,"howdy@mail.com".to_string());
+    }
+
+    #[test]
+    fn add_get_property_then_transfer() {
+
+        let mut contract = PropertySystem::default();
+        contract.add_property(
+            true, // is_available: bool,
+            "My jumbo system".to_string(),// title: String,
+            "5 bedroom mansion in Ruiru bypass".to_string(), // description: String,
+            "sale".to_string(),// status: String,
+            1_000_000,// price: i32,
+            5000,// area: i32,
+            "kenn".to_string(), // name: String,
+            "kenn".to_string(),// username: String,
+            "sample@email.com".to_string(),// email: String,
+            "254717008240".to_string(),// phone: String,
+            "254-466 Ruaraka".to_string(),// address: String,
+            "Ruiru".to_string(), // city: String,
+            "Kiambu".to_string(),// state: String,
+            "Kiambu".to_string(),// county: String,
+            0.02922,// lat: f32,
+            0.1223, // long: f32,
         );
 
-        // invalid password
-        let (res3, reason3) = contract.login_password("howdy@mail.com".to_string(), "".to_string());
-        assert_eq!(
-            res3,
-            None
-        );
-        assert_eq!(
-            reason3,
-            ACCOUNT_WRONG_PASSWORD.to_string()
-        );
+        let property = contract.get_property(1);
+
+        let new_property = property.unwrap();
+
+        assert_eq!(new_property.title,"My jumbo system".to_string());
+        assert_eq!(new_property.price,1_000_000);
+
+        let the_owner = env::signer_account_id();
+
+        assert_eq!(new_property.owner, the_owner.clone());
+
+        let property_for_account = contract.get_properties_for_account(the_owner);
+
+        assert_eq!(property_for_account[0].area, 5000);
+
+        contract.transfer_property_using_account(1,accounts(1));
+
+        let property_1 = contract.get_property(1).unwrap();
+
+        assert_eq!(property_1.owner, accounts(1));
+
+        let property_for_account_1 = contract.get_properties_for_account(accounts(1));
+
+        assert_eq!(property_for_account_1[0].area, 5000);
+        
+
+
+        
+        
+
     }
 }

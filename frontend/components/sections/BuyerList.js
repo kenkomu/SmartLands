@@ -27,6 +27,16 @@ import {
   FormLabel,
   Input,
   Textarea,
+  Table,
+  Thead,
+  Tbody,
+  Tfoot,
+  Tr,
+  Th,
+  Td,
+  TableCaption,
+  TableContainer,
+  SpaceProps,
   Popover,
   PopoverTrigger,
   PopoverContent,
@@ -36,14 +46,12 @@ import {
   PopoverArrow,
   PopoverCloseButton,
   PopoverAnchor,
-  Divider
 } from '@chakra-ui/react';
 
 import { Link } from "react-router-dom";
 import Select from 'react-select';
 import { uploadToIPFS } from "~/Infura";
 import { utils } from 'near-api-js';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 
 function generateTo(JobId) {
   return {
@@ -89,7 +97,7 @@ function ProprtyOwner(props) {
   );
 }
 
-function PropertyList({ isSignedIn, wallet ,contractId}) {
+function BuyerList({ isSignedIn, wallet ,contractId}) {
 
   const { isOpen: listingModalOpen, onOpen: openListingModal, onClose: closeListingModal } = useDisclosure();
   const { isOpen: transferModalOpen, onOpen: openTransferModal, onClose: closeTransferModal } = useDisclosure();
@@ -114,11 +122,6 @@ function PropertyList({ isSignedIn, wallet ,contractId}) {
       closeTransferModal();
     }
     setCurrentModal(null);
-  };
-
-  const mapStyle = {
-    height: '300px', // Set the desired height for the map
-    width: '100%', // Adjust the width as needed
   };
 
 
@@ -146,6 +149,7 @@ function PropertyList({ isSignedIn, wallet ,contractId}) {
   // to_account_str: String
 
   const [formData1, setFormData1] = useState({
+    from_account_str: '',
     to_account_str: '',
 
   });
@@ -279,6 +283,7 @@ function PropertyList({ isSignedIn, wallet ,contractId}) {
   const handleSubmitTransfer = async (id) => {
 
     const property_id =  id;
+    const from_account_str = formData1.from_account_str ;
     const to_account_str =  formData1.to_account_str;
 
  
@@ -290,7 +295,8 @@ function PropertyList({ isSignedIn, wallet ,contractId}) {
         method: "transfer_property_using_account",
         args: {
           property_id :property_id, 
-          to_account: to_account_str,
+          from_account_str : from_account_str, 
+          to_account_str: to_account_str,
         },
         contractId:contractId
         })
@@ -313,7 +319,7 @@ function PropertyList({ isSignedIn, wallet ,contractId}) {
 
   function getProperties() {
 		console.log(contractId)
-		return wallet.viewMethod({ method: "get_property_all", contractId});
+		return wallet.viewMethod({ method: "get_property_available", contractId});
    
 	
 	  };
@@ -552,10 +558,9 @@ function PropertyList({ isSignedIn, wallet ,contractId}) {
       </Modal>
       </>
 
-      <Heading as="h6"  padding="0.5rem 0 0">Properties</Heading>
+      <Heading as="h6"  padding="0.5rem 0 0">Properties Available</Heading>
       {properties.length > 0 ? (
         properties.map((property, index) =>
-        <>
         <Box
           key={index}
           marginTop={{ base: '1', sm: '5' }}
@@ -574,7 +579,7 @@ function PropertyList({ isSignedIn, wallet ,contractId}) {
               marginLeft={{ base: '0', sm: '5%' }}
               marginTop="5%">
               <Box textDecoration="none" _hover={{ textDecoration: 'none' }}>
-                {property.owner}
+                  {property.owner}
               </Box>
             </Box>
             <Box zIndex="1" width="100%" position="absolute" height="100%">
@@ -698,6 +703,17 @@ function PropertyList({ isSignedIn, wallet ,contractId}) {
                               </Button>
 
                                 <>
+                                  <FormControl mt={4}>
+                                    <FormLabel>From Account</FormLabel>
+                                    <Input
+                                      type="text"
+                                      name="from_account_str"
+                                      placeholder="From Account ID"
+                                      value={formData1.from_account_str}
+                                      onChange={handleInputChange1}
+                                      size="sm"
+                                    />
+                                  </FormControl>
                                   <FormControl>
                                     <FormLabel>To Account</FormLabel>
                                     <Input
@@ -723,15 +739,11 @@ function PropertyList({ isSignedIn, wallet ,contractId}) {
                   ) : (
                     // Render the "Removed" badge when the job is not available
                     <span style={{paddingLeft:'0'}}>
-                      
+                      <Badge colorScheme='red'>Not Available</Badge>
                     </span>
                   )}
           </Box>
-          
         </Box>
-        <Divider />
-        </>
-        
         )
         ) : (
           // If the jobs array is empty, display a message
@@ -742,4 +754,4 @@ function PropertyList({ isSignedIn, wallet ,contractId}) {
   );
 }
 
-export default PropertyList;
+export default BuyerList;

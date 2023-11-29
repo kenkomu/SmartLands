@@ -102,18 +102,24 @@ const Header = ({ isSignedIn, wallet, ...props }) => {
           <MenuItem to="/">Home</MenuItem>
           
           <MenuItem to="/properties">Properties </MenuItem>
+
+          <MenuItem to="/Buyer"> Buyer </MenuItem>
           
 
                {/* Conditional rendering of the Profile MenuItem */}
+
+          {isSignedIn && (
+             <MenuItem to="/seller">Seller</MenuItem>
+            )}
+
+          <MenuItem to="/aboutus"> Abou Us</MenuItem>
+
+          <MenuItem to="/contacts"> Contact </MenuItem>
+
           {isSignedIn && (
               <MenuItem to="/profile">Profile</MenuItem>
             )}
 
-          {isSignedIn && (
-              <MenuItem to="/aboutus"> Abou Us</MenuItem>
-            )}
-
-          <MenuItem to="/contacts"> Contact </MenuItem>
           
           <MenuItem isLast>
             {isSignedIn ? (
