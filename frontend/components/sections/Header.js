@@ -76,6 +76,7 @@ const Header = ({ isSignedIn, wallet, ...props }) => {
       p={8}
       bg={["primary.500", "primary.500", "transparent", "transparent"]}
       color={["white", "white", "primary.700", "primary.700"]}
+      boxShadow="0px 2px 4px rgba(0, 0, 0, 0.1)"
       {...props}
     >
       <Flex align="center">

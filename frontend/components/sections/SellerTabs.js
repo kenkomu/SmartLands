@@ -248,7 +248,7 @@ export default function SellerTabs({ isSignedIn, wallet ,contractId}) {
     <Container maxW={'7xl'}>
         <Badge>My properties</Badge>
         <TableContainer>
-            <Table variant='simple'>
+            <Table variant='simple' size="sm" borderWidth="1px">
                 <TableCaption>All properties</TableCaption>
                 <Thead>
                 <Tr>

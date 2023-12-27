@@ -110,7 +110,7 @@ impl PropertySystem {
     ) ->  String {
 
 
-        let from_account = env::signer_account_id();
+        let from_account = env::predecessor_account_id();
         // Check if account_id_to_check is in users HashMap
         if let Some(property) = self.properties.get_mut(&property_id) {
             if property.owner == from_account {

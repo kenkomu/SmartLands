@@ -149,7 +149,6 @@ function BuyerList({ isSignedIn, wallet ,contractId}) {
   // to_account_str: String
 
   const [formData1, setFormData1] = useState({
-    from_account_str: '',
     to_account_str: '',
 
   });
@@ -283,7 +282,6 @@ function BuyerList({ isSignedIn, wallet ,contractId}) {
   const handleSubmitTransfer = async (id) => {
 
     const property_id =  id;
-    const from_account_str = formData1.from_account_str ;
     const to_account_str =  formData1.to_account_str;
 
  
@@ -295,8 +293,7 @@ function BuyerList({ isSignedIn, wallet ,contractId}) {
         method: "transfer_property_using_account",
         args: {
           property_id :property_id, 
-          from_account_str : from_account_str, 
-          to_account_str: to_account_str,
+          to_account: to_account_str,
         },
         contractId:contractId
         })
@@ -703,17 +700,6 @@ function BuyerList({ isSignedIn, wallet ,contractId}) {
                               </Button>
 
                                 <>
-                                  <FormControl mt={4}>
-                                    <FormLabel>From Account</FormLabel>
-                                    <Input
-                                      type="text"
-                                      name="from_account_str"
-                                      placeholder="From Account ID"
-                                      value={formData1.from_account_str}
-                                      onChange={handleInputChange1}
-                                      size="sm"
-                                    />
-                                  </FormControl>
                                   <FormControl>
                                     <FormLabel>To Account</FormLabel>
                                     <Input

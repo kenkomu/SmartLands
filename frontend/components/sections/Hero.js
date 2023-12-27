@@ -52,22 +52,22 @@ export default function Hero({
   // This can be static or loaded from a server
   const cards = [
     {
-      title: 'Property 1',
-      text: ".",
+      title: 'Explore the finest in urban living with our stunning property.',
+      text: "Luxurious urban living at its finest.",
       image:
-        'https://images.unsplash.com/photo-1516796181074-bf453fbfa3e6?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1yZWxhdGVkfDV8fHxlbnwwfHx8fA%3D%3D&auto=format&fit=crop&w=900&q=60',
+        'https://res.cloudinary.com/duybctvku/image/upload/v1701249581/kladjv8nlp12kjar78yl.jpg',
     },
     {
-      title: 'Property 2 2',
+      title: 'Find your perfect property today',
       text: "",
       image:
-        'https://images.unsplash.com/photo-1438183972690-6d4658e3290e?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2274&q=80',
+        'https://res.cloudinary.com/duybctvku/image/upload/v1701249579/swzwniolcwhqfhcfbszz.jpg',
     },
     {
-      title: 'Property 3',
+      title: 'Let us help you find your perfect place to call home',
       text: ".",
       image:
-        'https://images.unsplash.com/photo-1507237998874-b4d52d1dd655?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1yZWxhdGVkfDR8fHxlbnwwfHx8fA%3D%3D&auto=format&fit=crop&w=900&q=60',
+        'https://res.cloudinary.com/duybctvku/image/upload/v1701249529/mkpmdpy8czdess6x243j.jpg',
     },
   ]
 

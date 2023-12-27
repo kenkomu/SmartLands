@@ -285,22 +285,43 @@ function PropertyList({ isSignedIn, wallet ,contractId}) {
 
     // const jsonData = JSON.stringify(updatedFormData);
 
-        wallet
-        .callMethod({
+
+    console.log("Transfer to",to_account_str);
+    
+
+    try {
+      wallet
+      .callMethod({
         method: "transfer_property_using_account",
         args: {
-          property_id :property_id, 
+          property_id: property_id,
           to_account: to_account_str,
         },
-        contractId:contractId
-        })
-        .then(async () => {
+        contractId: contractId
+      })
+      .then(async (response) => {
+        // Handle the response from the API call
+        console.log("Response:", response);
+    
+        // Get additional properties
         return getProperties();
-        })
-        .then(setProperties)
-        .finally(() => {
+      })
+      .then((properties) => {
+        // Handle properties obtained in the chain
+        setProperties(properties);
+      })
+      .catch((error) => {
+        // Handle any errors that occurred in the chain
+        console.error("An error occurred:", error);
+      })
+      .finally(() => {
+        // Finally block will execute regardless of success or failure
         setUiPleaseWait(false);
-        });
+      });
+    
+    } catch (error) {
+      console.error("An error occurred:", error);
+    }
       
 
 
